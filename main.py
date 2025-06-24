@@ -3,11 +3,12 @@ import shutil
 from typing import List
 from fastapi import FastAPI, File, Form, UploadFile, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 import os
 import io
 from PIL import Image
+import time
+
 
 app = FastAPI()
 
@@ -28,7 +29,8 @@ async def convertImage(background_tasks: BackgroundTasks,
                   singlePdf: bool = Form(...)):
 
     outputFolder = "temp_outputs"
-    os.makedirs(outputFolder, exist_ok=True) #create if theres no folder exists
+    os.makedirs(outputFolder, exist_ok=True)
+    start = time.time() #create if theres no folder exists
 
     # Save uploaded files temporarily
     if singlePdf:
@@ -76,6 +78,7 @@ async def convertImage(background_tasks: BackgroundTasks,
         full_path = os.path.join(outputFolder, only_file)
 
         background_tasks.add_task(cleanup)
+        print("Processing time:", time.time() - start)
 
         return FileResponse(
             path=full_path,
@@ -89,6 +92,7 @@ async def convertImage(background_tasks: BackgroundTasks,
         zip_path = shutil.make_archive("compressed_output", "zip", outputFolder)
 
         background_tasks.add_task(cleanup)
+        print("Processing time:", time.time() - start)
 
          #  Return ZIP file
         return FileResponse(
@@ -97,7 +101,10 @@ async def convertImage(background_tasks: BackgroundTasks,
             media_type="application/zip"
         )
 
-        
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000)
+
 
 
 # @app.post("/imgResize")
